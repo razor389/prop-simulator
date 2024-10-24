@@ -28,4 +28,3 @@ cargo run -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-
 ---
 
 This project uses **Rust** for parallel simulations, leveraging `rayon` for efficient performance on multi-core systems. Future plans include better output analysis and visual representation of results.
-```
