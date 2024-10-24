@@ -24,6 +24,7 @@ cargo run -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-
 - [ ] Visualizations for simulation results.
 - [ ] Support for bracket and win percentage options (for those not using returns file).
 - [ ] Make `max_opposite_excursion` optional in trade data.
+- [ ] Add support for other account types, like Apex, TradeFi, Topstep etc
 
 ---
 
