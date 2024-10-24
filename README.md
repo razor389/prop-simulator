@@ -1,4 +1,3 @@
-```md
 # Prop Simulator
 
 `prop-simulator` is a Monte Carlo simulator for evaluating prop account EV using historical trade data. It simulates trading accounts with flexible parameters, allowing you to analyze performance over time.
