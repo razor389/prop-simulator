@@ -16,7 +16,7 @@ cargo run -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-
 - `--iterations`: Number of Monte Carlo iterations (default: `10000`).
 - `--max-simulation-days`: Maximum number of days to simulate (default: `365`).
 - `--account-type`: Type of account to simulate (e.g., `Rally`, `Daytona`, `GT`, `LeMans`).
-- `--multiplier`: Multiplier for trade values (useful for instruments like NQ).
+- `--multiplier`: Multiplier for trade return and excursion values (if your trade data is not in dollars or otherwise need rescaling).
 
 ## TODO:
 
