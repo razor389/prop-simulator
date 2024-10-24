@@ -141,7 +141,7 @@ impl Trader {
         if let Some(amount) = self.ftt_account.allowed_withdrawal_amount(){
             let num_payouts = self.ftt_account.make_withdrawal(amount);
             self.bank_account.balance += amount;
-            println!("made withdrawal, bank balance: {}", self.bank_account.balance);
+            //println!("made withdrawal, bank balance: {}", self.bank_account.balance);
             if num_payouts >= self.max_payouts{
                 return TradingDayResult{
                     end_of_game: Some(EndOfGame::MaxPayouts),
