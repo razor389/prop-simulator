@@ -12,7 +12,7 @@ cargo run -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-
 
 ### Options:
 
-- `--csv-file` (required): Path to the CSV file containing trade data.
+- `--csv-file` (required): Path to the CSV file containing trade data (see sample_trades.csv for format).
 - `--iterations`: Number of Monte Carlo iterations (default: `10000`).
 - `--max-simulation-days`: Maximum number of days to simulate (default: `365`).
 - `--account-type`: Type of account to simulate (e.g., `Rally`, `Daytona`, `GT`, `LeMans`).
