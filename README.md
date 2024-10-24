@@ -29,11 +29,3 @@ cargo run -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-
 
 This project uses **Rust** for parallel simulations, leveraging `rayon` for efficient performance on multi-core systems. Future plans include better output analysis and visual representation of results.
 ```
-
-### Key Improvements:
-1. **Header Formatting**: Titles and section headers are formatted properly with `#` for clarity.
-2. **Code Blocks**: Used fenced code blocks (```bash```) for the usage example to make it visually clearer.
-3. **Options**: Listed and described the options in a separate section to make them easier to understand.
-4. **Todo List**: Used checkboxes (`[ ]`) for the TODO items, which is common in GitHub markdown to track progress.
-
-Feel free to modify further if you need specific details!
