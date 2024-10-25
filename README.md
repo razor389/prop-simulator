@@ -70,7 +70,7 @@ This command will execute the simulator with the following parameters:
 To run the simulator with a bracket and win % instead of a .csv file, run:
 
 ```bash
-cargo run -- --iterations 1000000 -a 10 --stop-loss 40 --take-profit 40 --win-percentage 50 --max-simulation-days 200 --account-type Rally --multiplier 20
+cargo run -- --iterations 1000000 --avg-trades-per-day 10 --stop-loss 40 --take-profit 40 --win-percentage 50 --max-simulation-days 200 --account-type Rally --multiplier 20
 ```
 
 ### Example CSV Format
