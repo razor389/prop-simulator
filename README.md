@@ -24,12 +24,6 @@ git --version
 
 To install Rust, use the official Rust toolchain installer, `rustup`. You can find instructions [here](https://www.rust-lang.org/tools/install).
 
-Run the following command to install Rust:
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
 After installation, verify it with:
 
 ```bash
@@ -41,7 +35,7 @@ rustc --version
 Once Git and Rust are installed, you need to clone this project from GitHub to your local machine. Run the following command in your terminal or command prompt:
 
 ```bash
-git clone https://github.com/yourusername/prop-simulator.git
+git clone https://github.com/razor389/prop-simulator.git
 ```
 
 This will download the project files into a folder named `prop-simulator`. Navigate into the project directory:
