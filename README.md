@@ -80,8 +80,8 @@ DateTime,Return,Max Opposite Excursion
 
 ## TODO:
 
-- [ ] Add logging for simulation events and results.
-- [ ] Visualizations for simulation results.
+- [ ] Add logging for simulation events and results. (use `log` and `env_logger` libs)
+- [ ] Visualizations for simulation results. (use `plotters` lib)
 - [ ] Support for bracket and win percentage options (for those not using a returns file).
 - [ ] Make `max_opposite_excursion` optional in trade data.
 - [ ] Add support for other account types, like Apex, TradeFi, Topstep, etc.
