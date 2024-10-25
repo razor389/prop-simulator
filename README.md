@@ -86,7 +86,7 @@ DateTime,Return,Max Opposite Excursion
 
 ## TODO:
 
-- [ ] Add logging for simulation events and results. (use `log` and `env_logger` libs)
+- [x] Add logging for simulation events and results. (use `log` and `env_logger` libs)
 - [x] Visualizations for simulation results. (use `plotters` lib)
 - [x] Support for bracket and win percentage options (for those not using a returns file).
 - [ ] Make `max_opposite_excursion` optional in trade data.
