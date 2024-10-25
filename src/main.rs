@@ -1,4 +1,5 @@
 use clap::Parser;
+use plotting::plot_histogram;
 use crate::trade_data::read_csv;
 use ftt_account::FttAccountType;
 use rand::seq::SliceRandom;
@@ -10,6 +11,7 @@ use std::error::Error;
 mod trade_data;
 mod ftt_account;
 mod trader;
+mod plotting;
 
 /// Monte Carlo simulation for trading accounts.
 #[derive(Parser, Debug)]
@@ -66,6 +68,14 @@ struct Cli {
     /// Multiplier for trade values (optional)
     #[arg(short = 'x', long, default_value_t = 1.0)]
     multiplier: f64,
+
+    /// Option to generate and save a histogram of final account balances
+    #[arg(long, default_value_t = false)]
+    histogram: bool,
+    
+    /// File path to save the histogram image
+    #[arg(long, default_value = "final_balances_histogram.png")]
+    histogram_file: String,
 }
 
 // Monte Carlo simulation using parallel execution
@@ -182,6 +192,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("Mean final bank account balance: {}", mean_balance);
     println!("Standard deviation of final balances: {}", std_dev);
+
+    // Plot histogram if enabled
+    if cli.histogram {
+        plot_histogram(&final_balances, &cli.histogram_file)?;
+        println!("Histogram saved to {}", cli.histogram_file);
+    }
 
     Ok(())
 }
