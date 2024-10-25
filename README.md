@@ -1,20 +1,18 @@
 # Prop Simulator
 
-`prop-simulator` is a Monte Carlo simulator for evaluating prop account expected value using historical trade data. currently implemented for fast track trading accounts. more to come.
+`prop-simulator` is a Monte Carlo simulator for evaluating the expected value (EV) of proprietary (prop) trading accounts using historical or simulated trade data. It is currently set up for Fast Track Trading accounts, with plans to add more options in the future.
 
 ## Getting Started
 
 ### Prerequisites
 
-Before running the simulator, ensure you have installed:
+Before running the simulator, ensure you have:
 - **Git**: Used to clone the project from GitHub.
 - **Rust**: The programming language required to compile and run the simulator.
 
 #### Install Git
 
-If you don't have Git installed, you can download it [here](https://git-scm.com/downloads) and follow the installation instructions for your operating system.
-
-After installation, you can verify it by running the following command in your terminal or command prompt:
+If Git is not installed, you can download it [here](https://git-scm.com/downloads) and follow the installation instructions for your OS. Verify installation by running:
 
 ```bash
 git --version
@@ -22,9 +20,7 @@ git --version
 
 #### Install Rust
 
-To install Rust, use the official Rust toolchain installer, `rustup`. You can find instructions [here](https://www.rust-lang.org/tools/install).
-
-After installation, verify it with:
+Install Rust using the `rustup` installer. You can find instructions [here](https://www.rust-lang.org/tools/install). Verify installation by running:
 
 ```bash
 rustc --version
@@ -32,13 +28,13 @@ rustc --version
 
 ### Cloning the Project
 
-Once Git and Rust are installed, you need to clone this project from GitHub to your local machine. Run the following command in your terminal or command prompt:
+Clone the project repository from GitHub:
 
 ```bash
 git clone https://github.com/razor389/prop-simulator.git
 ```
 
-This will download the project files into a folder named `prop-simulator`. Navigate into the project directory:
+Navigate into the project directory:
 
 ```bash
 cd prop-simulator
@@ -46,36 +42,34 @@ cd prop-simulator
 
 ### Building and Running the Simulator
 
-To build and run the simulator with a .csv file of trades, use `cargo`, Rust's package manager and build tool. From the `prop-simulator` directory, run:
+To build and run the simulator, use the `cargo` tool:
+
+```bash
+cargo run -- <arguments>
+```
+
+## Running the Simulator
+
+The simulator can be run in two modes:
+
+1. **With Historical Trade Data (CSV)**
+2. **With Simulated Bracket Parameters (stop loss, take profit, win %)**
+   
+### Mode 1: Using Historical Trade Data (CSV)
+
+If you have historical trade data in a CSV file, you can run the simulator with the following command:
 
 ```bash
 cargo run -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-days 200 --account-type GT --multiplier 20
 ```
 
-This command will execute the simulator with the following parameters:
-- `--csv-file ./sample_trades.csv`: Specifies the path to the CSV file containing historical trade data.
-- `--iterations 50000`: Sets the number of Monte Carlo simulation iterations.
-- `--max-simulation-days 200`: Simulates up to 200 trading days.
-- `--account-type GT`: Simulates the GT account type.
-- `--multiplier 20`: Multiplies the trade return values by 20 (useful for converting points into dollars or other units).
+- `--csv-file ./sample_trades.csv`: Path to the CSV file containing historical trade data.
+- `--iterations 50000`: Sets the number of Monte Carlo iterations.
+- `--max-simulation-days 200`: Maximum days to simulate.
+- `--account-type GT`: Account type to simulate.
+- `--multiplier 20`: Multiplier for trade values (e.g., to convert points to dollars).
 
-### Options:
-
-- `--csv-file` (required): Path to the CSV file containing trade data (see sample_trades.csv for format).
-- `--iterations`: Number of Monte Carlo iterations (default: `10000`).
-- `--max-simulation-days`: Maximum number of days to simulate (default: `365`).
-- `--account-type`: Type of account to simulate (e.g., `Rally`, `Daytona`, `GT`, `LeMans`).
-- `--multiplier`: Multiplier for trade return and excursion values (if your trade data is not in dollars or otherwise needs rescaling).
-
-To run the simulator with a bracket and win % instead of a .csv file, run:
-
-```bash
-cargo run -- --iterations 1000000 --avg-trades-per-day 10 --stop-loss 40 --take-profit 40 --win-percentage 50 --max-simulation-days 200 --account-type Rally --multiplier 20
-```
-
-### Example CSV Format
-
-The CSV file should contain columns like `DateTime`, `Return`, and `Max Opposite Excursion`, formatted as shown below:
+The CSV file should be formatted as follows:
 
 ```csv
 DateTime,Return,Max Opposite Excursion
@@ -84,14 +78,79 @@ DateTime,Return,Max Opposite Excursion
 2024-09-13 00:59:00,22.20,-18.75
 ```
 
-## TODO:
+### Mode 2: Using Simulated Bracket Parameters
 
-- [x] Add logging for simulation events and results. (use `log` and `env_logger` libs)
-- [x] Visualizations for simulation results. (use `plotters` lib)
-- [x] Support for bracket and win percentage options (for those not using a returns file).
+If you don't have historical data, you can simulate trade results based on a stop loss, take profit, win percentage, and average trades per day:
+
+```bash
+cargo run -- --iterations 1000000 --avg-trades-per-day 10 --stop-loss 40 --take-profit 40 --win-percentage 50 --max-simulation-days 200 --account-type Rally --multiplier 20
+```
+
+This command will simulate trades using the provided parameters instead of reading from a CSV file.
+
+- `--avg-trades-per-day 10`: Average number of trades per day.
+- `--stop-loss 40`: Stop loss in ticks.
+- `--take-profit 40`: Take profit in ticks.
+- `--win-percentage 50`: Win percentage for the simulated strategy.
+
+## Viewing the Histogram
+
+You can generate and save a histogram of the final account balances by including the `--histogram` flag:
+
+```bash
+cargo run -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-days 200 --account-type GT --multiplier 20 --histogram --histogram-file balance_histogram.png
+```
+
+- `--histogram`: Enables histogram generation.
+- `--histogram-file balance_histogram.png`: Specifies the filename for saving the histogram image (default is `final_balances_histogram.png`).
+
+This will output a histogram showing the distribution of final balances after all simulation iterations.
+
+## Enabling Logging
+
+The program includes logging functionality that provides detailed debug information for each trading day, such as daily P&L, number of trades, trading day results, bank account balance, and FTT account balance. 
+
+To enable detailed logging, set the `RUST_LOG` environment variable:
+
+- **On Linux/macOS**:
+
+  ```bash
+  RUST_LOG=debug cargo run -- <arguments>
+  ```
+
+- **On Windows** (PowerShell):
+
+  ```powershell
+  $env:RUST_LOG="debug"
+  cargo run -- <arguments>
+  ```
+
+This will output debug information to the console, allowing you to trace each day’s activities in the simulation.
+
+## Options Summary
+
+| Option                   | Description                                                                                     |
+|--------------------------|-------------------------------------------------------------------------------------------------|
+| `--csv-file <file>`      | Path to the CSV file containing historical trade data.                                          |
+| `--iterations <number>`  | Number of Monte Carlo simulation iterations. Default is 10,000.                                 |
+| `--max-simulation-days`  | Maximum days to simulate. Default is 365.                                                       |
+| `--account-type <type>`  | Account type to simulate (e.g., Rally, Daytona, GT, LeMans). Default is GT.                     |
+| `--multiplier <value>`   | Multiplier for scaling trade values (e.g., points to dollars).                                  |
+| `--avg-trades-per-day`   | Average trades per day for simulated bracket strategy.                                          |
+| `--stop-loss <ticks>`    | Stop loss in ticks for simulated bracket strategy.                                              |
+| `--take-profit <ticks>`  | Take profit in ticks for simulated bracket strategy.                                            |
+| `--win-percentage <%>`   | Win percentage for the simulated strategy.                                                      |
+| `--histogram`            | Enables histogram generation for final account balances.                                        |
+| `--histogram-file <file>`| Filename to save the histogram image. Default is `final_balances_histogram.png`.                |
+
+## TODO
+
+- [x] Add logging for simulation events and results (`log` and `env_logger`).
+- [x] Visualizations for simulation results (`plotters`).
+- [x] Support for bracket and win percentage options (for those not using a CSV file).
 - [ ] Make `max_opposite_excursion` optional in trade data.
-- [ ] Add support for other account types, like Apex Trader Funding, Tradeify, Topstep Futures, etc.
+- [ ] Add support for additional account types, such as Apex Trader Funding, Tradeify, Topstep Futures, etc.
 
 ---
 
-This project uses **Rust** for parallel simulations, leveraging `rayon` for efficient performance on multi-core systems. Future plans include better output analysis and visual representation of results.
+This project leverages **Rust**'s parallelism with `rayon` for efficient performance on multi-core systems. Future plans include enhanced output analysis and improved visualization.
