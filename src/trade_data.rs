@@ -43,6 +43,7 @@ pub fn read_csv(file_path: &str, multiplier: f64) -> Result<Vec<TradeRecord>, Bo
     Ok(trades)
 }
 
+#[allow(dead_code)]
 // Function to generate simulated trades using Poisson distribution and win percentage
 pub fn generate_simulated_trades(
     avg_trades_per_day: f64,
