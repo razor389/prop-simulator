@@ -46,7 +46,7 @@ cd prop-simulator
 
 ### Building and Running the Simulator
 
-To build and run the simulator, use `cargo`, Rust's package manager and build tool. From the `prop-simulator` directory, run:
+To build and run the simulator with a .csv file of trades, use `cargo`, Rust's package manager and build tool. From the `prop-simulator` directory, run:
 
 ```bash
 cargo run -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-days 200 --account-type GT --multiplier 20
@@ -66,6 +66,12 @@ This command will execute the simulator with the following parameters:
 - `--max-simulation-days`: Maximum number of days to simulate (default: `365`).
 - `--account-type`: Type of account to simulate (e.g., `Rally`, `Daytona`, `GT`, `LeMans`).
 - `--multiplier`: Multiplier for trade return and excursion values (if your trade data is not in dollars or otherwise needs rescaling).
+
+To run the simulator with a bracket and win % instead of a .csv file, run:
+
+```bash
+cargo run -- --iterations 1000000 -a 10 --stop-loss 40 --take-profit 40 --win-percentage 50 --max-simulation-days 200 --account-type Rally --multiplier 20
+```
 
 ### Example CSV Format
 
