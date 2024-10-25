@@ -121,7 +121,7 @@ impl FttAccountType {
 
 #[derive(Debug)]
 pub struct FttAccount {
-    current_balance: f64,        // current balance
+    pub current_balance: f64,        // current balance
     hwm_balance: f64,           //high water mark
     drawdown: f64,          //drawdown  == profit target
     loss_balance: f64,   // accounts for max loss limit / drawdown allowance (Drawdown updates EOD, stops at initial balance. max loss is intraday)
@@ -138,7 +138,7 @@ pub struct FttAccount {
 
 #[derive(Debug)]
 pub enum AccountStatus{
-    Blown,
+    Blown(f64),
     Active(f64),
 }
 
@@ -152,7 +152,7 @@ impl FttAccount {
             if self.current_balance + trade.max_opposite_excursion < self.loss_balance{
                 //trade would have won but mae blew us out
                 self.current_balance += trade.max_opposite_excursion;
-                return AccountStatus::Blown;
+                return AccountStatus::Blown(trade.max_opposite_excursion);
             }
             else{
                 self.current_balance += trade.return_value;
@@ -162,7 +162,7 @@ impl FttAccount {
         else{
             if self.current_balance + trade.return_value < self.loss_balance{
                 self.current_balance += trade.return_value;
-                return AccountStatus::Blown;
+                return AccountStatus::Blown(trade.return_value);
             }
             else{
                 self.current_balance += trade.return_value;

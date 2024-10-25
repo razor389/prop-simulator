@@ -1,3 +1,5 @@
+use log::debug;
+
 use crate::{ftt_account::{ AccountStatus, FttAccount, FttAccountType}, trade_data::Trade};
 
 
@@ -104,10 +106,13 @@ impl Trader {
         let mut daily_pnl = 0.0;
         let mut num_trades_today = 0;
 
+        debug!("Starting a new trading day");
+
         for trade in trades_today.iter_mut(){
             //for a given trade:
             if let Some(max_trades) = self.max_trades_per_day{
                 if num_trades_today >= max_trades{
+                    debug!("Reached max trades per day limit: {}", max_trades);
                     break;
                 }
             }
@@ -116,33 +121,49 @@ impl Trader {
                 self.adj_trade_for_daily_stop_or_target(trade, daily_pnl);
             //did we blow account?
             match self.ftt_account.trade_on_account(trade) {
-                AccountStatus::Blown =>{
+                AccountStatus::Blown(ret) =>{
+                    debug!("Trade executed, return: {:.2}, cumulative daily P&L: {:.2}", ret, daily_pnl+ret);
+                    debug!("Account blown during trade, daily P&L: {:.2}, trades taken: {}", daily_pnl+ret, num_trades_today+1);
                     return TradingDayResult{
                         end_of_game: Some(EndOfGame::Busted),
                     }
                 },
                 AccountStatus::Active(ret) =>{
                     daily_pnl += ret;
+                    debug!("Trade executed, return: {:.2}, cumulative daily P&L: {:.2}", ret, daily_pnl);
                 }
             }
             //didnt blow acct if we got here. did we hit daily stop/target?
             match daily_stop_tp_status {
-                DailyStopTPStatus::TPHit => break,
-                DailyStopTPStatus::StopHit => break,
+                DailyStopTPStatus::TPHit => {
+                    debug!("Daily profit target hit with P&L: {:.2}", daily_pnl); 
+                    break;
+                },
+                DailyStopTPStatus::StopHit => {
+                    debug!("Daily stop loss hit with P&L: {:.2}", daily_pnl);
+                    break;
+                },
                 _ => (),
             }
             num_trades_today += 1;
         }
         //update drawdown/max loss
         self.ftt_account.update_loss_balance();
+        // Log the bank and FTT account balances at the end of the trading day
+        debug!(
+            "End of trading day summary: daily P&L: {:.2}, trades taken: {}, bank balance: {:.2}, FTT account balance: {:.2}",
+            daily_pnl, num_trades_today, self.bank_account.balance, self.ftt_account.current_balance
+        );
+
         //was it a real trading day?
         self.ftt_account.try_add_trading_day(daily_pnl);
         //can we make a withdrawal?
         if let Some(amount) = self.ftt_account.allowed_withdrawal_amount(){
             let num_payouts = self.ftt_account.make_withdrawal(amount);
             self.bank_account.balance += amount;
-            //println!("made withdrawal, bank balance: {}", self.bank_account.balance);
+            debug!("Withdrawal made: {:.2}, bank balance after withdrawal: {:.2}", amount, self.bank_account.balance);
             if num_payouts >= self.max_payouts{
+                debug!("Reached max payouts: {}, ending simulation for this trader.", self.max_payouts);
                 return TradingDayResult{
                     end_of_game: Some(EndOfGame::MaxPayouts),
                 }
@@ -150,11 +171,13 @@ impl Trader {
         }
 
         if self.ftt_account.simulation_days >= self.max_simulation_days{
+            debug!("Max simulation days reached: {}", self.max_simulation_days);
             return TradingDayResult{
                 end_of_game: Some(EndOfGame::TimeOut),
             }
         }
         
+        debug!("Trading day completed without hitting max payouts, max days, or blowing account.");
         return TradingDayResult{
             end_of_game: None,
         }

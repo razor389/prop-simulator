@@ -7,6 +7,8 @@ use rayon::prelude::*;
 use trade_data::{calculate_trades_per_day, generate_simulated_trades, TradeRecord};
 use trader::Trader;
 use std::error::Error;
+use env_logger::Env;
+use log::{info, debug, warn, error};
 
 mod trade_data;
 mod ftt_account;
@@ -131,6 +133,11 @@ fn monte_carlo_simulation(
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    // Initialize the logger with a default log level of "info"
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+
+    info!("Starting the Prop Simulator");
+
     // Parse command-line arguments using Clap
     let cli = Cli::parse();
 
