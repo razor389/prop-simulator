@@ -8,6 +8,7 @@ use trade_data::{calculate_trades_per_day, generate_simulated_trades, TradeRecor
 use trader::Trader;
 use std::error::Error;
 use env_logger::Env;
+#[allow(unused_imports)]
 use log::{info, debug, warn, error};
 
 mod trade_data;
