@@ -190,8 +190,35 @@ fn main() -> Result<(), Box<dyn Error>> {
         .sum::<f64>() / final_balances.len() as f64;
     let std_dev = variance.sqrt();
 
+
+    // Compute Mean Absolute Deviation (MAD)
+    let mad: f64 = final_balances.iter()
+        .map(|balance| (balance - mean_balance).abs())
+        .sum::<f64>() / final_balances.len() as f64;
+
+    // Compute Interquartile Range (IQR)
+    let mut sorted_balances = final_balances.clone();
+    sorted_balances.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let q1 = sorted_balances[sorted_balances.len() / 4];
+    let q3 = sorted_balances[3 * sorted_balances.len() / 4];
+    let iqr = q3 - q1;
+
+    // Compute Median Absolute Deviation (MAD-Median)
+    let median_balance = sorted_balances[sorted_balances.len() / 2];
+    let mad_median = {
+        let mut deviations: Vec<f64> = sorted_balances.iter()
+            .map(|&balance| (balance - median_balance).abs())
+            .collect();
+        deviations.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        deviations[deviations.len() / 2]
+    };
+
+    println!("Median final bank account balance: {}", median_balance);
     println!("Mean final bank account balance: {}", mean_balance);
     println!("Standard deviation of final balances: {}", std_dev);
+    println!("Mean Absolute Deviation (MAD): {}", mad);
+    println!("Interquartile Range (IQR): {}", iqr);
+    println!("Median Absolute Deviation (MAD-Median): {}", mad_median);
 
     // Plot histogram if enabled
     if cli.histogram {
