@@ -83,7 +83,7 @@ pub fn generate_simulated_trades(
             } else {
                 // Losing trade: use favorable move for max_opposite_excursion
                 let mfe = normal_mfe.sample(&mut rng).abs().min(take_profit); // Cap MFE at take-profit
-                (stop_loss * multiplier, mfe * multiplier) // Stop loss is the return value (loss)
+                (-1.0 * stop_loss * multiplier, mfe * multiplier) // Stop loss is the return value (loss)
             };
 
             trades.push(TradeRecord {
@@ -95,7 +95,7 @@ pub fn generate_simulated_trades(
             });
         }
     }
-
+    //println!("{:#?}", trades);
     trades
 }
 

@@ -82,7 +82,7 @@ DateTime,Return,Max Opposite Excursion
 
 - [ ] Add logging for simulation events and results. (use `log` and `env_logger` libs)
 - [ ] Visualizations for simulation results. (use `plotters` lib)
-- [ ] Support for bracket and win percentage options (for those not using a returns file).
+- [x] Support for bracket and win percentage options (for those not using a returns file).
 - [ ] Make `max_opposite_excursion` optional in trade data.
 - [ ] Add support for other account types, like Apex Trader Funding, Tradeify, Topstep Futures, etc.
 

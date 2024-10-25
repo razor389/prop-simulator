@@ -3,7 +3,7 @@ use crate::trade_data::read_csv;
 use ftt_account::FttAccountType;
 use rand::seq::SliceRandom;
 use rayon::prelude::*;
-use trade_data::{calculate_trades_per_day, TradeRecord};
+use trade_data::{calculate_trades_per_day, generate_simulated_trades, TradeRecord};
 use trader::Trader;
 use std::error::Error;
 
@@ -15,9 +15,9 @@ mod trader;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    /// Path to the CSV file containing trade data
-    #[arg(short, long)]
-    csv_file: String,
+    /// Path to the CSV file containing trade data (optional, required if not using simulation)
+    #[arg(short = 'f', long)]
+    csv_file: Option<String>,
 
     /// Number of iterations for the Monte Carlo simulation
     #[arg(short, long, default_value_t = 10000)]
@@ -35,6 +35,22 @@ struct Cli {
     #[arg(short = 's', long)]
     daily_stop_loss: Option<f64>,
 
+    /// Average number of trades per day (for simulated strategy)
+    #[arg(short = 'a', long)]
+    avg_trades_per_day: Option<f64>,
+
+    /// Stop loss (ticks) for simulated strategy (required if using simulated strategy)
+    #[arg(long)]
+    stop_loss: Option<f64>,
+
+    /// Take profit (ticks) for simulated strategy (required if using simulated strategy)
+    #[arg(long)]
+    take_profit: Option<f64>,
+
+    /// Win percentage (for simulated strategy)
+    #[arg(long)]
+    win_percentage: Option<f64>,
+
     /// Maximum number of simulation days
     #[arg(short = 'd', long, default_value_t = 365)]
     max_simulation_days: u64,
@@ -44,7 +60,7 @@ struct Cli {
     max_payouts: u8,
 
     /// Account type: Rally, Daytona, GT, LeMans
-    #[arg(short, long, default_value_t = String::from("GT"))]
+    #[arg(short = 'c', long, default_value_t = String::from("GT"))]
     account_type: String,
 
     /// Multiplier for trade values (optional)
@@ -117,7 +133,24 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     // Load the trade records from the CSV file
-    let trades = read_csv(&cli.csv_file, cli.multiplier)?;
+    let trades = if let Some(csv_file) = cli.csv_file {
+        // If CSV file is provided, read trades from the CSV
+        read_csv(&csv_file, cli.multiplier)?
+    } else {
+        // Otherwise, generate trades using the provided parameters
+        let stop_loss = cli.stop_loss.ok_or("Not using csv. Stop loss is required for simulated bracket trades")?;
+        let take_profit = cli.take_profit.ok_or("Not using csv. Take profit is required for simulated bracket trades")?;
+        let win_percentage = cli.win_percentage.ok_or("Not using csv. Win percentage is required for simulated bracket trades")?;
+        let avg_trades_per_day = cli.avg_trades_per_day.ok_or("Not using csv. Average trades per day is required for simulated bracket trades")?;
+
+        generate_simulated_trades(
+            avg_trades_per_day,
+            stop_loss,
+            take_profit,
+            win_percentage,
+            cli.multiplier
+        )
+    };
 
     // Group trades by day and get the distribution of trades per day
     let trades_per_day_map = calculate_trades_per_day(&trades);
@@ -138,9 +171,17 @@ fn main() -> Result<(), Box<dyn Error>> {
         cli.max_payouts,
     );
 
-    // Compute statistics from the results (e.g., mean balance)
+    // Compute mean balance
     let mean_balance: f64 = final_balances.iter().sum::<f64>() / final_balances.len() as f64;
+
+    // Compute standard deviation
+    let variance: f64 = final_balances.iter()
+        .map(|balance| (balance - mean_balance).powi(2))
+        .sum::<f64>() / final_balances.len() as f64;
+    let std_dev = variance.sqrt();
+
     println!("Mean final bank account balance: {}", mean_balance);
+    println!("Standard deviation of final balances: {}", std_dev);
 
     Ok(())
 }
