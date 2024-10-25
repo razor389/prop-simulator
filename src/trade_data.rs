@@ -1,6 +1,8 @@
 use std::{collections::HashMap, error::Error};
 use csv::Reader;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
+use rand::Rng;
+use rand_distr::{Poisson, Normal, Distribution};
 
 #[derive(Debug, Clone)]
 pub struct Trade{
@@ -39,6 +41,61 @@ pub fn read_csv(file_path: &str, multiplier: f64) -> Result<Vec<TradeRecord>, Bo
     }
 
     Ok(trades)
+}
+
+// Function to generate simulated trades using Poisson distribution and win percentage
+pub fn generate_simulated_trades(
+    avg_trades_per_day: f64,
+    stop_loss: f64,
+    take_profit: f64,
+    win_percentage: f64,
+    multiplier: f64,
+) -> Vec<TradeRecord> {
+    let mut rng = rand::thread_rng();
+    let poisson = Poisson::new(avg_trades_per_day).unwrap();
+    
+    // Normal distribution for adverse excursions (MAE for wins)
+    let mae_mean = stop_loss * 0.5; // Mean of adverse move (50% of stop-loss)
+    let mae_stddev = stop_loss * 0.25; // Stddev of adverse move (25% of stop-loss)
+    let normal_mae = Normal::new(mae_mean, mae_stddev).unwrap();
+
+    // Normal distribution for favorable excursions (MFE for losses)
+    let mfe_mean = take_profit * 0.5; // Mean of favorable move (50% of take-profit)
+    let mfe_stddev = take_profit * 0.25; // Stddev of favorable move (25% of take-profit)
+    let normal_mfe = Normal::new(mfe_mean, mfe_stddev).unwrap();
+
+    let start_date = Utc.with_ymd_and_hms(2024, 1, 1, 9, 30, 0).unwrap();
+
+    let mut trades = Vec::new();
+
+    for day in 0..365 { // Simulating 365 days
+        let num_trades_today = poisson.sample(&mut rng) as usize;
+        for _ in 0..num_trades_today {
+            let datetime = start_date + chrono::Duration::days(day);
+
+            // Randomly determine if the trade is a win or a loss based on win_percentage
+            let win = rng.gen_bool(win_percentage / 100.0);
+            let (return_value, max_opposite_excursion) = if win {
+                // Winning trade: use adverse move for max_opposite_excursion
+                let mae = normal_mae.sample(&mut rng).abs().min(stop_loss); // Cap MAE at stop-loss
+                (take_profit * multiplier, mae * multiplier) // Take profit is the return value
+            } else {
+                // Losing trade: use favorable move for max_opposite_excursion
+                let mfe = normal_mfe.sample(&mut rng).abs().min(take_profit); // Cap MFE at take-profit
+                (stop_loss * multiplier, mfe * multiplier) // Stop loss is the return value (loss)
+            };
+
+            trades.push(TradeRecord {
+                datetime,
+                trade: Trade {
+                    return_value,
+                    max_opposite_excursion,
+                },
+            });
+        }
+    }
+
+    trades
 }
 
 // Group trades by day and calculate the number of trades per day

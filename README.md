@@ -1,14 +1,69 @@
 # Prop Simulator
 
-`prop-simulator` is a Monte Carlo simulator for evaluating prop account EV using historical trade data. It simulates trading accounts with flexible parameters, allowing you to analyze performance over time.
+`prop-simulator` is a Monte Carlo simulator for evaluating prop account expected value (EV) using historical trade data. It simulates trading accounts with flexible parameters, allowing you to analyze performance over time.
 
-## Usage
+## Getting Started
 
-To run the simulator, use the following command:
+### Prerequisites
+
+Before running the simulator, ensure you have installed:
+- **Git**: Used to clone the project from GitHub.
+- **Rust**: The programming language required to compile and run the simulator.
+
+#### Install Git
+
+If you don't have Git installed, you can download it [here](https://git-scm.com/downloads) and follow the installation instructions for your operating system.
+
+After installation, you can verify it by running the following command in your terminal or command prompt:
+
+```bash
+git --version
+```
+
+#### Install Rust
+
+To install Rust, use the official Rust toolchain installer, `rustup`. You can find instructions [here](https://www.rust-lang.org/tools/install).
+
+Run the following command to install Rust:
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+After installation, verify it with:
+
+```bash
+rustc --version
+```
+
+### Cloning the Project
+
+Once Git and Rust are installed, you need to clone this project from GitHub to your local machine. Run the following command in your terminal or command prompt:
+
+```bash
+git clone https://github.com/yourusername/prop-simulator.git
+```
+
+This will download the project files into a folder named `prop-simulator`. Navigate into the project directory:
+
+```bash
+cd prop-simulator
+```
+
+### Building and Running the Simulator
+
+To build and run the simulator, use `cargo`, Rust's package manager and build tool. From the `prop-simulator` directory, run:
 
 ```bash
 cargo run -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-days 200 --account-type GT --multiplier 20
 ```
+
+This command will execute the simulator with the following parameters:
+- `--csv-file ./sample_trades.csv`: Specifies the path to the CSV file containing historical trade data.
+- `--iterations 50000`: Sets the number of Monte Carlo simulation iterations.
+- `--max-simulation-days 200`: Simulates up to 200 trading days.
+- `--account-type GT`: Simulates the GT account type.
+- `--multiplier 20`: Multiplies the trade return values by 20 (useful for converting points into dollars or other units).
 
 ### Options:
 
@@ -16,15 +71,26 @@ cargo run -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-
 - `--iterations`: Number of Monte Carlo iterations (default: `10000`).
 - `--max-simulation-days`: Maximum number of days to simulate (default: `365`).
 - `--account-type`: Type of account to simulate (e.g., `Rally`, `Daytona`, `GT`, `LeMans`).
-- `--multiplier`: Multiplier for trade return and excursion values (if your trade data is not in dollars or otherwise need rescaling).
+- `--multiplier`: Multiplier for trade return and excursion values (if your trade data is not in dollars or otherwise needs rescaling).
+
+### Example CSV Format
+
+The CSV file should contain columns like `DateTime`, `Return`, and `Max Opposite Excursion`, formatted as shown below:
+
+```csv
+DateTime,Return,Max Opposite Excursion
+2024-09-12 19:20:00,17.45,-9
+2024-09-12 20:02:00,18.45,-6
+2024-09-13 00:59:00,22.20,-18.75
+```
 
 ## TODO:
 
 - [ ] Add logging for simulation events and results.
 - [ ] Visualizations for simulation results.
-- [ ] Support for bracket and win percentage options (for those not using returns file).
+- [ ] Support for bracket and win percentage options (for those not using a returns file).
 - [ ] Make `max_opposite_excursion` optional in trade data.
-- [ ] Add support for other account types, like Apex, TradeFi, Topstep etc
+- [ ] Add support for other account types, like Apex, TradeFi, Topstep, etc.
 
 ---
 
