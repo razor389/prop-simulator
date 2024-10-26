@@ -151,7 +151,164 @@ This will output debug information to the console, allowing you to trace each da
 - [ ] Make `max_opposite_excursion` optional in trade data.
 - [ ] Add support for additional account types, such as Apex Trader Funding, Tradeify, Topstep Futures, etc.
 - [ ] Gather more data from simulation: distribution of account lifetimes, percentage blown/timeout/max payouts, average lifetimes and returns for those groupings
-- [ ] Use `actix-web` to handle HTTP requests and turn this code into the backend for a web app (separate repo)
+- [ ] Use `actix-web` to handle HTTP requests (see below)
+
+## Command Line + Actix Web App
+
+### 1. Modularize Core Logic
+
+Put the core simulation functionality into a dedicated Rust module or library that both the CLI and web server can call. This way,we avoid code duplication and ensure that any updates apply to both interfaces.
+
+- Move the core functionality (e.g., `monte_carlo_simulation`, data handling, calculations) into a separate module like `src/simulator/`.
+- Create functions within `src/simulator/` that provide a consistent API for running simulations, regardless of input source (CSV or simulated data).
+
+For example, the folder structure could look like this:
+
+```
+prop-simulator/
+├── src/
+│   ├── main.rs            // CLI entry point
+│   ├── web.rs             // Web server entry point
+│   ├── simulator/         // Core simulation logic
+│   │   ├── lib.rs
+│   │   ├── trade_data.rs
+│   │   ├── ftt_account.rs
+│   │   ├── trader.rs
+│   │   └── utils.rs
+└── Cargo.toml
+```
+
+### 2. Implement the Core Library in `src/simulator/lib.rs`
+
+Move all the core simulation logic to `src/simulator/lib.rs`. The CLI and web server can then import this as a module.
+
+#### `src/simulator/lib.rs`
+
+```rust
+pub mod trade_data;
+pub mod ftt_account;
+pub mod trader;
+pub mod utils;
+
+use trade_data::{generate_simulated_trades, read_csv, calculate_trades_per_day, TradeRecord};
+use ftt_account::FttAccountType;
+use trader::Trader;
+use utils::*;
+
+pub struct SimulationConfig {
+    // configuration fields (iterations, account type, etc.)
+}
+
+pub struct SimulationResult {
+    pub mean_balance: f64,
+    pub median_balance: f64,
+    pub std_dev: f64,
+    pub mad: f64,
+    pub iqr: f64,
+    pub mad_median: f64,
+}
+
+pub fn run_simulation(config: SimulationConfig) -> SimulationResult {
+    // Core simulation logic here
+}
+```
+
+### 3. CLI Entry Point (`main.rs`)
+
+Keep the command-line interface code in `src/main.rs`, but update it to call the core functionality in `simulator::lib`.
+
+#### `src/main.rs`
+
+```rust
+use clap::Parser;
+use simulator::{SimulationConfig, run_simulation};
+
+#[derive(Parser)]
+struct Cli {
+    // Define CLI arguments here
+}
+
+fn main() {
+    let args = Cli::parse();
+
+    let config = SimulationConfig {
+        // Populate config based on CLI arguments
+    };
+
+    let result = run_simulation(config);
+
+    // Output results in the console
+    println!("Mean balance: {}", result.mean_balance);
+}
+```
+
+### 4. Web Server Entry Point (`web.rs`)
+
+Implement the Actix Web API in `src/web.rs`. This file can import `simulator::lib` to use the same core functionality as the CLI.
+
+#### `src/web.rs`
+
+```rust
+use actix_web::{post, web, App, HttpServer, Responder};
+use simulator::{SimulationConfig, run_simulation};
+
+#[post("/simulate")]
+async fn simulate(params: web::Json<SimulationConfig>) -> impl Responder {
+    let result = run_simulation(params.into_inner());
+    web::Json(result)
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| App::new().service(simulate))
+        .bind("127.0.0.1:8080")?
+        .run()
+        .await
+}
+```
+
+### 5. Use Feature Flags (Optional)
+
+If we want users to choose between CLI and web versions when they build the app, we can use [Cargo feature flags](https://doc.rust-lang.org/cargo/reference/features.html). This allows us to enable the web server or CLI separately during compilation.
+
+In `Cargo.toml`:
+
+```toml
+[features]
+default = ["cli"]
+cli = []
+web = ["actix-web"]
+
+[dependencies]
+actix-web = { version = "4", optional = true }
+clap = { version = "4", features = ["derive"] }
+```
+
+In `src/main.rs`:
+
+```rust
+#[cfg(feature = "cli")]
+fn main() {
+    // CLI entry point logic here
+}
+
+#[cfg(feature = "web")]
+fn main() {
+    web::start_server();  // Call a function in web.rs to start the server
+}
+```
+
+Run the CLI version with:
+
+```bash
+cargo run --features "cli"
+```
+
+Run the web version with:
+
+```bash
+cargo run --features "web"
+```
 
 ---
 
