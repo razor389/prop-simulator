@@ -151,7 +151,7 @@ This will output debug information to the console, allowing you to trace each da
 - [ ] Make `max_opposite_excursion` optional in trade data.
 - [ ] Add support for additional account types, such as Apex Trader Funding, Tradeify, Topstep Futures, etc.
 - [ ] Gather more data from simulation: distribution of account lifetimes, percentage blown/timeout/max payouts, average lifetimes and returns for those groupings
-- [ ] Use `actix-web` to handle HTTP requests and turn this code into the backend for a web app
+- [ ] Use `actix-web` to handle HTTP requests and turn this code into the backend for a web app (separate repo)
 
 ---
 
