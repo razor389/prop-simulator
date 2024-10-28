@@ -12,7 +12,7 @@ pub struct BankAccount {
 #[derive(Debug)]
 pub struct Trader {
     pub bank_account: BankAccount,
-    ftt_account: FttAccount,
+    pub ftt_account: FttAccount,
     max_trades_per_day: Option<u64>,    //should be positive if Some
     daily_profit_target: Option<f64>, //should be positive if Some
     daily_stop_loss: Option<f64>, //should be negative if Some
@@ -20,7 +20,7 @@ pub struct Trader {
     max_payouts: u8,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum EndOfGame{
     Busted, //blew account
     TimeOut, //hit max simulation days
