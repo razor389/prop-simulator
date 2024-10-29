@@ -43,6 +43,31 @@ pub fn read_csv(file_path: &str, multiplier: f64) -> Result<Vec<TradeRecord>, Bo
     Ok(trades)
 }
 
+// Function to read and parse CSV data from a string
+pub fn read_csv_from_string(data: &str, multiplier: f64) -> Result<Vec<TradeRecord>, Box<dyn Error>> {
+    let mut rdr = csv::Reader::from_reader(data.as_bytes());
+    let mut trades = Vec::new();
+
+    for result in rdr.records() {
+        let record = result?;
+        let datetime_str = &record[0];
+        let naive = NaiveDateTime::parse_from_str(datetime_str, "%Y%m%d %H:%M:%S")?;
+        let datetime = Utc.from_utc_datetime(&naive);
+        let return_value: f64 = record[1].parse()?;
+        let max_opposite_excursion: f64 = record[2].parse()?;
+
+        trades.push(TradeRecord {
+            datetime,
+            trade: Trade {
+                return_value: return_value * multiplier,
+                max_opposite_excursion: max_opposite_excursion * multiplier,
+            },
+        });
+    }
+
+    Ok(trades)
+}
+
 #[allow(dead_code)]
 // Function to generate simulated trades using Poisson distribution and win percentage
 pub fn generate_simulated_trades(

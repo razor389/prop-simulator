@@ -1,6 +1,6 @@
 use log::debug;
-
-use crate::{ftt_account::{ AccountStatus, FttAccount, FttAccountType}, trade_data::Trade};
+use serde::{Serialize, Deserialize};
+use super::{ftt_account::{ AccountStatus, FttAccount, FttAccountType}, trade_data::Trade};
 
 
 #[derive(Debug)]
@@ -20,11 +20,11 @@ pub struct Trader {
     max_payouts: u8,
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-pub enum EndOfGame{
-    Busted, //blew account
-    TimeOut, //hit max simulation days
-    MaxPayouts, //hit max payouts
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum EndOfGame {
+    Busted,
+    TimeOut,
+    MaxPayouts,
 }
 
 #[derive(Debug)]

@@ -1,4 +1,5 @@
-use crate::trade_data::Trade;
+use super::trade_data::Trade;
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug)]
 pub struct RealTradingDay{
@@ -23,7 +24,7 @@ impl RealTradingDay{
 }
 
 // Enum for FTT account types and their rule sets
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[allow(dead_code)]
 pub enum FttAccountType {
     Rally,

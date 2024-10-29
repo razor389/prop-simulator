@@ -3,29 +3,29 @@ name = "prop-simulator"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["cli"]
+cli = []
+web = ["actix-web"]
+
 [dependencies]
 # Rand crate for random number generation and sampling from distributions
 rand = "0.8"  # or the latest version
-
 # Chrono crate for handling dates and times
 chrono = { version = "0.4", features = ["serde"] }  # Chrono is used for parsing and manipulating dates
-
 # CSV crate for reading and parsing CSV files
 csv = "1.1"  # or the latest version
-
-# Serde crate for serialization/deserialization (used by csv)
-serde = { version = "1.0", features = ["derive"] }
-
+serde = { version = "1.0", features = ["derive"]}
+serde_json = { version = "1.0" }
 rayon = "1.5"
-
 anyhow = "1.0"
-
 clap = { version = "4.0", features = ["derive"] }
-
 rand_distr = "0.4"
-
 plotters = "0.3"
-
+image = "0.23"
+base64 = "0.13"
 log = "0.4"
-
 env_logger = "0.10"
+actix-web = { version = "4", optional = true }
+actix-multipart = "0.4"
+futures-util = "0.3"
