@@ -50,6 +50,7 @@ pub struct SimulationResult {
     pub mad_median: f64,
     pub mean_days: f64,
     pub end_state_percentages: HashMap<EndOfGame, f64>,
+    pub positive_balance_percentage: f64, 
     #[cfg(feature = "web")]
     pub histogram_image_base64: Option<String>,
 }
@@ -211,6 +212,11 @@ pub fn run_simulation(config: SimulationConfig) -> Result<SimulationResult, Box<
         deviations[deviations.len() / 2]
     };
 
+    // Compute the percentage of positive balances
+    let positive_balances_count = filtered_balances.iter().filter(|&&b| b > 0.0).count();
+    let positive_balance_percentage = (positive_balances_count as f64 / filtered_balances.len() as f64) * 100.0;
+
+
     // Optionally generate and save a histogram
 
     #[cfg(feature = "web")]
@@ -245,6 +251,7 @@ pub fn run_simulation(config: SimulationConfig) -> Result<SimulationResult, Box<
         mad_median,
         mean_days,
         end_state_percentages,
+        positive_balance_percentage,
         #[cfg(feature = "web")]
         histogram_image_base64,   // Included in JSON response
     })

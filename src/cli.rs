@@ -92,6 +92,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     // Display the results
     println!("\nStatistics Conditioned on End State '{}':", cli.condition_end_state);
+    println!("Percent Positive Final Bank Balance: {:.2}", result.positive_balance_percentage);
     println!("Mean Simulation Length: {:.2} days", result.mean_days);
     println!("Median Final Bank Balance: {:.2}", result.median_balance);
     println!("Mean Final Bank Balance: {:.2}", result.mean_balance);
