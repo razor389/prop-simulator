@@ -4,7 +4,6 @@ pub mod topstep_account;
 pub mod account_type;
 
 use crate::simulator::trade_data::Trade;
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug)]
 pub enum AccountStatus {

@@ -1,8 +1,6 @@
-use std::str::FromStr;
-
 use log::debug;
 use serde::{Serialize, Deserialize};
-use super::prop_account::{create_account, ftt_account::{FttAccount, FttAccountType}, AccountStatus, AccountType, PropAccount, TopstepAccount, TopstepAccountType};
+use super::prop_account::{create_account, AccountStatus, AccountType, PropAccount};
 use super::trade_data::Trade;
 
 
@@ -137,7 +135,7 @@ impl Trader {
                 },
                 AccountStatus::PassedEval =>{
                     self.bank_account.balance -= self.prop_account.get_funded_acct_cost();
-                    debug!("Passed eval");
+                    debug!("Passed eval, prop acct balance: {}", self.prop_account.get_current_balance());
                     return TradingDayResult{
                         end_of_game: None,
                     }
@@ -163,7 +161,7 @@ impl Trader {
 
         // Log the bank and ccount balances at the end of the trading day
         debug!(
-            "End of trading day summary: daily P&L: {:.2}, trades taken: {}, bank balance: {:.2}, FTT account balance: {:.2}",
+            "End of trading day summary: daily P&L: {:.2}, trades taken: {}, bank balance: {:.2}, prop account balance: {:.2}",
             daily_pnl, num_trades_today, self.bank_account.balance, self.prop_account.get_current_balance()
         );
         //can we make a withdrawal?

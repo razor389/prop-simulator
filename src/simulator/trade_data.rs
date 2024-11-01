@@ -1,4 +1,4 @@
-use std::{cmp::max, collections::HashMap, error::Error};
+use std::{collections::HashMap, error::Error};
 use csv::Reader;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use rand::Rng;

@@ -1,7 +1,8 @@
 use std::str::FromStr;
 
-use super::{AccountStatus, PropAccount, TopstepAccount};
+use super::{AccountStatus, PropAccount};
 use crate::simulator::trade_data::Trade;
+use log::debug;
 use serde::{Serialize, Deserialize};
 
 const FTT_CONSISTENCY_FRACTION: f64 = 0.2;
@@ -168,7 +169,7 @@ impl FttAccount {
 
     pub fn trade_on_account(&mut self, trade: &Trade) -> AccountStatus{
         if trade.return_value > 0.0 {
-            if self.current_balance + trade.max_opposite_excursion < self.loss_balance{
+            if self.current_balance + trade.max_opposite_excursion <= self.loss_balance{
                 //trade would have won but mae blew us out
                 self.current_balance += trade.max_opposite_excursion;
                 return AccountStatus::Blown(trade.max_opposite_excursion);
@@ -179,7 +180,7 @@ impl FttAccount {
             }
         }
         else{
-            if self.current_balance + trade.return_value < self.loss_balance{
+            if self.current_balance + trade.return_value <= self.loss_balance{
                 self.current_balance += trade.return_value;
                 return AccountStatus::Blown(trade.return_value);
             }
@@ -200,6 +201,7 @@ impl FttAccount {
                 if self.loss_balance > 0.0{
                     self.loss_balance = 0.0;
                 }
+                debug!("eod trail updated. new loss balance: {}", self.loss_balance);
                 self.hwm_balance = self.current_balance;
             }
         }

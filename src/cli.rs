@@ -3,7 +3,7 @@ use clap::Parser;
 use env_logger::Env;
 use log::info;
 use prop_simulator::simulator::{self, prop_account::AccountType};
-use simulator::{SimulationConfig, run_simulation, FttAccountType, plot_histogram};
+use simulator::{SimulationConfig, run_simulation, plot_histogram};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
