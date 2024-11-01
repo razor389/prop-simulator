@@ -93,7 +93,7 @@ cargo run --features "cli" -- <arguments>
 **Example**:
 
 ```bash
-cargo run --features "cli" -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-days 200 --account-type GT --multiplier 20
+cargo run --features "cli" -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-days 200 --account-type ftt:GT --multiplier 20
 ```
 
 ### Web Server Mode
@@ -119,13 +119,13 @@ This will start the web server on `http://127.0.0.1:8080`.
 If you have historical trade data in a CSV file, you can run the simulator with the following command:
 
 ```bash
-cargo run --features "cli" -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-days 200 --account-type GT --multiplier 20
+cargo run --features "cli" -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-days 200 --account-type topstep:OneFifty --multiplier 20
 ```
 
 - `--csv-file ./sample_trades.csv`: Path to the CSV file containing historical trade data.
 - `--iterations 50000`: Sets the number of Monte Carlo iterations.
 - `--max-simulation-days 200`: Maximum days to simulate.
-- `--account-type GT`: Account type to simulate.
+- `--account-type topstep:OneFifty`: Account type to simulate, in the format company:account.
 - `--multiplier 20`: Multiplier for trade values (e.g., to convert points to dollars).
 
 **CSV File Format**:
@@ -144,7 +144,7 @@ DateTime,Return,Max Opposite Excursion
 If you don't have historical data, you can simulate trade results based on stop loss, take profit, win percentage, and average trades per day:
 
 ```bash
-cargo run --features "cli" -- --iterations 1000000 --avg-trades-per-day 10 --stop-loss 40 --take-profit 40 --win-percentage 50 --max-simulation-days 200 --account-type Rally --multiplier 20
+cargo run --features "cli" -- --iterations 1000000 --avg-trades-per-day 10 --stop-loss 40 --take-profit 40 --win-percentage 50 --max-simulation-days 200 --account-type ftt:Rally --multiplier 20
 ```
 
 - `--avg-trades-per-day 10`: Average number of trades per day.
@@ -157,7 +157,7 @@ cargo run --features "cli" -- --iterations 1000000 --avg-trades-per-day 10 --sto
 You can generate and save a histogram of the final account balances by including the `--histogram` flag:
 
 ```bash
-cargo run --features "cli" -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-days 200 --account-type GT --multiplier 20 --histogram --histogram-file balance_histogram.png
+cargo run --features "cli" -- --csv-file ./sample_trades.csv --iterations 50000 --max-simulation-days 200 --account-type ftt:GT --multiplier 20 --histogram --histogram-file balance_histogram.png
 ```
 
 - `--histogram`: Enables histogram generation.
@@ -179,7 +179,7 @@ You can interact with the web server using tools like `curl` or Postman.
 
 ```bash
 curl -X POST http://127.0.0.1:8080/simulate \
-     -F 'config={"iterations":10000,"max_simulation_days":200,"max_payouts":12,"account_type":"GT","multiplier":40,"histogram":true,"condition_end_state":"All"}' \
+     -F 'config={"iterations":10000,"max_simulation_days":200,"max_payouts":12,"account_type":"ftt:GT","multiplier":40,"histogram":true,"condition_end_state":"All"}' \
      -F 'csv_file=@./sample_trades.csv' \
      -H "Accept: application/json" \
      -o response.json
@@ -197,7 +197,7 @@ curl -X POST http://127.0.0.1:8080/simulate \
 - `iterations`: Number of simulation iterations.
 - `max_simulation_days`: Maximum days to simulate.
 - `max_payouts`: Maximum number of payouts.
-- `account_type`: Account type (e.g., "GT").
+- `account_type`: Account type (e.g., "ftt:GT").
 - `multiplier`: Multiplier for trade values.
 - `histogram`: Set to `true` to generate a histogram.
 - `condition_end_state`: Specifies the condition end state (e.g., "All").
@@ -260,7 +260,7 @@ else:
 
 ```bash
 curl -X POST http://127.0.0.1:8080/simulate \
-     -F 'config={"iterations":5000,"max_simulation_days":100,"account_type":"GT","multiplier":20,"histogram":true,"condition_end_state":"All"}' \
+     -F 'config={"iterations":5000,"max_simulation_days":100,"account_type":"ftt:GT","multiplier":20,"histogram":true,"condition_end_state":"All"}' \
      -F 'csv_file=@./sample_trades.csv' \
      -H "Accept: application/json" \
      -o response.json
@@ -270,7 +270,6 @@ curl -X POST http://127.0.0.1:8080/simulate \
 
 ```json
 {
-  "final_balances": [ ... ],
   "mean_balance": 1200.50,
   "median_balance": 1100.00,
   "std_dev": 300.75,
@@ -283,6 +282,7 @@ curl -X POST http://127.0.0.1:8080/simulate \
     "TimeOut": 50.0,
     "MaxPayouts": 25.0
   },
+  "positive_balance_percentage":16.27,
   "histogram_image_base64": "iVBORw0KGgoAAAANSUhEUgAA..."
 }
 ```
@@ -320,7 +320,7 @@ Replace `<arguments>` with your specific command-line arguments.
 |--------------------------------|-------------------------------------------------------------------------------------------------|
 | `--iterations <number>`        | Number of Monte Carlo simulation iterations. Default is 10,000.                                 |
 | `--max-simulation-days <days>` | Maximum days to simulate. Default is 365.                                                       |
-| `--account-type <type>`        | Account type to simulate (e.g., Rally, Daytona, GT, LeMans). Default is GT.                     |
+| `--account-type <type>`        | Account type to simulate (e.g., ftt:Rally, ftt:Daytona, ftt:GT, ftt:LeMans, topstep:Fifty, topstep:OneHundred, topstep:OneFifty). Default is ftt:GT.                     |
 | `--multiplier <value>`         | Multiplier for scaling trade values (e.g., points to dollars).                                  |
 | `--histogram`                  | Enables histogram generation for final account balances.                                        |
 | `--histogram-file <file>`      | Filename to save the histogram image (CLI mode only). Default is `final_balances_histogram.png`.|
@@ -349,10 +349,11 @@ Replace `<arguments>` with your specific command-line arguments.
 - [x] Visualizations for simulation results (`plotters`).
 - [x] Support for bracket and win percentage options (for those not using a CSV file).
 - [ ] Make `max_opposite_excursion` optional in trade data.
-- [ ] Add support for additional account types, such as Apex Trader Funding, Tradeify, Topstep Futures, etc.
+- [x] Add support for additional account types, such as Apex Trader Funding, Tradeify, Topstep Futures, etc.
 - [x] Gather more data from simulation: distribution of account lifetimes, percentage blown/timeout/max payouts, average lifetimes and returns for those groupings.
 - [x] Use `actix-web` to handle HTTP requests.
 - [x] Include histogram image in the JSON response as Base64-encoded data.
+- [ ] Use different histogram plotting library for web server, maybe `plotly`. Keep plotters for CLI
 
 ---
 
