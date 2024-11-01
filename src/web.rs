@@ -41,12 +41,14 @@ async fn simulate(mut payload: Multipart) -> impl Responder {
                 data.extend_from_slice(&chunk.unwrap());
             }
             csv_data = Some(String::from_utf8(data).unwrap());
-        }
+        } 
     }
 
     // Ensure config is present
     let mut config = match config {
-        Some(c) => c,
+        Some(c) => {
+            c
+        },
         None => {
             return HttpResponse::BadRequest().body("Missing simulation configuration");
         }
@@ -69,7 +71,6 @@ async fn simulate(mut payload: Multipart) -> impl Responder {
         }
     }
 }
-
 
 #[actix_web::main]
 pub async fn main() -> std::io::Result<()> {

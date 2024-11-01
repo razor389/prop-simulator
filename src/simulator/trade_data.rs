@@ -18,9 +18,13 @@ pub struct TradeRecord {
 }
 
 // Function to read and parse the CSV file
-pub fn read_csv(file_path: &str, multiplier: f64, round_trip_cost: f64) -> Result<Vec<TradeRecord>, Box<dyn Error>> {
+pub fn read_csv(file_path: &str, multiplier: f64, round_trip_cost: Option<f64>) -> Result<Vec<TradeRecord>, Box<dyn Error>> {
     let mut rdr = Reader::from_path(file_path)?;
     let mut trades = Vec::new();
+    let mut cost = 0.0;
+    if let Some(rt_cost) = round_trip_cost{
+        cost = rt_cost;
+    }
 
     for result in rdr.records() {
         let record = result?;
@@ -34,8 +38,8 @@ pub fn read_csv(file_path: &str, multiplier: f64, round_trip_cost: f64) -> Resul
         trades.push(TradeRecord {
             datetime,
             trade: Trade{
-                return_value: return_value*multiplier - round_trip_cost,
-                max_opposite_excursion: max_opposite_excursion*multiplier - round_trip_cost
+                return_value: return_value*multiplier - cost,
+                max_opposite_excursion: max_opposite_excursion*multiplier - cost
             },
         });
     }
@@ -44,10 +48,13 @@ pub fn read_csv(file_path: &str, multiplier: f64, round_trip_cost: f64) -> Resul
 }
 
 // Function to read and parse CSV data from a string
-pub fn read_csv_from_string(data: &str, multiplier: f64, round_trip_cost: f64) -> Result<Vec<TradeRecord>, Box<dyn Error>> {
+pub fn read_csv_from_string(data: &str, multiplier: f64, round_trip_cost: Option<f64>) -> Result<Vec<TradeRecord>, Box<dyn Error>> {
     let mut rdr = csv::Reader::from_reader(data.as_bytes());
     let mut trades = Vec::new();
-
+    let mut cost = 0.0;
+    if let Some(rt_cost) = round_trip_cost{
+        cost = rt_cost;
+    }
     for result in rdr.records() {
         let record = result?;
         let datetime_str = &record[0];
@@ -59,8 +66,8 @@ pub fn read_csv_from_string(data: &str, multiplier: f64, round_trip_cost: f64) -
         trades.push(TradeRecord {
             datetime,
             trade: Trade {
-                return_value: return_value * multiplier - round_trip_cost,
-                max_opposite_excursion: max_opposite_excursion * multiplier - round_trip_cost,
+                return_value: return_value * multiplier - cost,
+                max_opposite_excursion: max_opposite_excursion * multiplier - cost,
             },
         });
     }
@@ -76,11 +83,14 @@ pub fn generate_simulated_trades(
     take_profit: f64,
     win_percentage: f64,
     multiplier: f64,
-    round_trip_cost: f64,
+    round_trip_cost: Option<f64>,
 ) -> Vec<TradeRecord> {
     let mut rng = rand::thread_rng();
     let poisson = Poisson::new(avg_trades_per_day).unwrap();
-    
+    let mut cost = 0.0;
+    if let Some(rt_cost) = round_trip_cost{
+        cost = rt_cost;
+    }
     // Normal distribution for adverse excursions (MAE for wins)
     let mae_mean = stop_loss * 0.5; // Mean of adverse move (50% of stop-loss)
     let mae_stddev = stop_loss * 0.25; // Stddev of adverse move (25% of stop-loss)
@@ -115,8 +125,8 @@ pub fn generate_simulated_trades(
             trades.push(TradeRecord {
                 datetime,
                 trade: Trade {
-                    return_value: return_value - round_trip_cost,
-                    max_opposite_excursion: max_opposite_excursion - round_trip_cost,
+                    return_value: return_value - cost,
+                    max_opposite_excursion: max_opposite_excursion - cost,
                 },
             });
         }

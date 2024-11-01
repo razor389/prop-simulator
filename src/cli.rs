@@ -1,8 +1,7 @@
-use std::{error::Error, str::FromStr};
+use std::error::Error;
 use clap::Parser;
 use env_logger::Env;
-use log::info;
-use prop_simulator::simulator::{self, prop_account::AccountType};
+use prop_simulator::simulator;
 use simulator::{SimulationConfig, run_simulation, plot_histogram};
 
 #[derive(Parser, Debug)]
@@ -30,7 +29,7 @@ struct Cli {
     max_simulation_days: u64,
     #[arg(short = 'm', long, default_value_t = 12)]
     max_payouts: u8,
-    #[arg(short = 'c', long, default_value_t = String::from("GT"))]
+    #[arg(short = 'c', long, default_value_t = String::from("ftt:GT"))]
     account_type: String,
     #[arg(short = 'x', long, default_value_t = 1.0)]
     multiplier: f64,
@@ -38,8 +37,8 @@ struct Cli {
     histogram: bool,
     #[arg(long, default_value = "final_balances_histogram.png")]
     histogram_file: String,
-    #[arg(long, default_value_t = 0.0)]
-    round_trip_cost: f64,
+    #[arg(long)]
+    round_trip_cost: Option<f64>,
     /// Condition aggregate statistics based on end state (options: "Busted", "TimeOut", "MaxPayouts", "All")
     #[arg(long, default_value = "All")]
     condition_end_state: String,
@@ -49,12 +48,8 @@ struct Cli {
 
 pub fn main() -> Result<(), Box<dyn Error>> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
-    info!("Starting the Prop Simulator");
 
     let cli = Cli::parse();
-
-    // Map CLI arguments to SimulationConfig
-    let account_type = AccountType::from_str(cli.account_type.as_str()).ok().unwrap();
 
     let config = SimulationConfig {
         csv_file: cli.csv_file,
@@ -70,7 +65,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         win_percentage: cli.win_percentage,
         max_simulation_days: cli.max_simulation_days,
         max_payouts: cli.max_payouts,
-        account_type,
+        account_type: cli.account_type,
         multiplier: cli.multiplier,
         histogram: cli.histogram,
         histogram_file: Some(cli.histogram_file.clone()),

@@ -17,6 +17,7 @@ use rand::seq::SliceRandom;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::error::Error;
+use std::str::FromStr;
 use log::info;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,14 +28,14 @@ pub struct SimulationConfig {
     pub max_trades_per_day: Option<u64>,
     pub daily_profit_target: Option<f64>,
     pub daily_stop_loss: Option<f64>,
-    pub round_trip_cost: f64,
+    pub round_trip_cost: Option<f64>,
     pub avg_trades_per_day: Option<f64>,
     pub stop_loss: Option<f64>,
     pub take_profit: Option<f64>,
     pub win_percentage: Option<f64>,
     pub max_simulation_days: u64,
     pub max_payouts: u8,
-    pub account_type: AccountType,
+    pub account_type: String,
     pub multiplier: f64,
     pub histogram: bool,
     pub histogram_file: Option<String>,
@@ -43,6 +44,7 @@ pub struct SimulationConfig {
 
 #[derive(Debug, Serialize)]
 pub struct SimulationResult {
+    #[serde(skip_serializing)]
     pub final_balances: Vec<f64>,
     pub mean_balance: f64,
     pub median_balance: f64,
@@ -70,7 +72,10 @@ pub fn run_simulation(config: SimulationConfig) -> Result<SimulationResult, Box<
     info!("Starting the Prop Simulator");
 
     // Clone the account type for use in the simulation
-    let account_type = config.account_type.clone();
+    let account_type = AccountType::from_str(&config.account_type)
+        .map_err(|_| "Invalid account type format")?;
+
+    info!("Running simulation with account type: {:?}", account_type);
 
     // Load or generate trades based on the provided configuration
     let trades = if let Some(csv_data) = &config.csv_data {
