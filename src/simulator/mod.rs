@@ -69,8 +69,7 @@ struct IterationResult {
 pub fn run_simulation(config: SimulationConfig) -> Result<SimulationResult, Box<dyn Error>> {
     // Initialize logging if not already initialized (optional)
     // env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
-    info!("Starting the Prop Simulator");
-
+    info!("Starting the Prop Simulator with simulation config: {:?}", config.clone());
     // Clone the account type for use in the simulation
     let account_type = AccountType::from_str(&config.account_type)
         .map_err(|_| "Invalid account type format")?;
