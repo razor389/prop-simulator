@@ -125,7 +125,7 @@ cargo run --features "cli" -- --csv-file ./sample_trades.csv --iterations 50000 
 - `--csv-file ./sample_trades.csv`: Path to the CSV file containing historical trade data.
 - `--iterations 50000`: Sets the number of Monte Carlo iterations.
 - `--max-simulation-days 200`: Maximum days to simulate.
-- `--account-type topstep:OneFifty`: Account type to simulate, in the format company:account.
+- `--account-type topstep:OneFifty`: Account type to simulate, in the format `company:account`.
 - `--multiplier 20`: Multiplier for trade values (e.g., to convert points to dollars).
 
 **CSV File Format**:
