@@ -1,8 +1,8 @@
-use std::error::Error;
+use std::{error::Error, str::FromStr};
 use clap::Parser;
 use env_logger::Env;
 use log::info;
-use prop_simulator::simulator;
+use prop_simulator::simulator::{self, prop_account::AccountType};
 use simulator::{SimulationConfig, run_simulation, FttAccountType, plot_histogram};
 
 #[derive(Parser, Debug)]
@@ -38,7 +38,8 @@ struct Cli {
     histogram: bool,
     #[arg(long, default_value = "final_balances_histogram.png")]
     histogram_file: String,
-    
+    #[arg(long, default_value_t = 0.0)]
+    round_trip_cost: f64,
     /// Condition aggregate statistics based on end state (options: "Busted", "TimeOut", "MaxPayouts", "All")
     #[arg(long, default_value = "All")]
     condition_end_state: String,
@@ -53,12 +54,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
     // Map CLI arguments to SimulationConfig
-    let account_type = match cli.account_type.as_str() {
-        "Rally" => FttAccountType::Rally,
-        "Daytona" => FttAccountType::Daytona,
-        "LeMans" => FttAccountType::LeMans,
-        _ => FttAccountType::GT,
-    };
+    let account_type = AccountType::from_str(cli.account_type.as_str()).ok().unwrap();
 
     let config = SimulationConfig {
         csv_file: cli.csv_file,
@@ -68,6 +64,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         daily_profit_target: cli.daily_profit_target,
         daily_stop_loss: cli.daily_stop_loss,
         avg_trades_per_day: cli.avg_trades_per_day,
+        round_trip_cost: cli.round_trip_cost,
         stop_loss: cli.stop_loss,
         take_profit: cli.take_profit,
         win_percentage: cli.win_percentage,

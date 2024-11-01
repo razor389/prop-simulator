@@ -1,6 +1,9 @@
+use std::str::FromStr;
+
 use log::debug;
 use serde::{Serialize, Deserialize};
-use super::{ftt_account::{ AccountStatus, FttAccount, FttAccountType}, trade_data::Trade};
+use super::prop_account::{create_account, ftt_account::{FttAccount, FttAccountType}, AccountStatus, AccountType, PropAccount, TopstepAccount, TopstepAccountType};
+use super::trade_data::Trade;
 
 
 #[derive(Debug)]
@@ -9,10 +12,9 @@ pub struct BankAccount {
 }
 
 // Struct representing the user, with a bank account and FTT account
-#[derive(Debug)]
 pub struct Trader {
     pub bank_account: BankAccount,
-    pub ftt_account: FttAccount,
+    pub prop_account: Box<dyn PropAccount + Send + Sync>,
     max_trades_per_day: Option<u64>,    //should be positive if Some
     daily_profit_target: Option<f64>, //should be positive if Some
     daily_stop_loss: Option<f64>, //should be negative if Some
@@ -42,19 +44,18 @@ pub struct TradingDayResult{
 impl Trader {
 
     // Create a new Trader by specifying only the FTT account type
-    pub fn new(account_type: FttAccountType, 
+    pub fn new(account_type: AccountType, 
         max_trades_per_day: Option<u64>, 
         daily_profit_target: Option<f64>, 
         daily_stop_loss: Option<f64>,
         max_simulation_days: u64,
         max_payouts: u8,
     ) -> Self {
-        // Create the FttAccount based on the account type
-        let ftt_account = FttAccount::new(account_type.clone());
-
+        // Create the PropAccount based on the account type
+        let prop_account: Box<dyn PropAccount + Send +Sync> = create_account(account_type);
         // Set the bank account balance to the negative cost of the FTT account
         let bank_account = BankAccount {
-            balance: -account_type.get_cost(),
+            balance: -prop_account.get_cost(),
         };
 
         //TODO: ensure stop/pt / trades per day are properly signed if Some
@@ -62,7 +63,7 @@ impl Trader {
         // Return the new user with both accounts initialized
         Self {
             bank_account,
-            ftt_account,
+            prop_account,
             max_trades_per_day,
             daily_profit_target,
             daily_stop_loss,
@@ -120,7 +121,9 @@ impl Trader {
             let daily_stop_tp_status = 
                 self.adj_trade_for_daily_stop_or_target(trade, daily_pnl);
             //did we blow account?
-            match self.ftt_account.trade_on_account(trade) {
+            let account_status = self.prop_account.process_trade(trade);
+
+            match account_status {
                 AccountStatus::Blown(ret) =>{
                     debug!("Trade executed, return: {:.2}, cumulative daily P&L: {:.2}", ret, daily_pnl+ret);
                     debug!("Account blown during trade, daily P&L: {:.2}, trades taken: {}", daily_pnl+ret, num_trades_today+1);
@@ -131,6 +134,13 @@ impl Trader {
                 AccountStatus::Active(ret) =>{
                     daily_pnl += ret;
                     debug!("Trade executed, return: {:.2}, cumulative daily P&L: {:.2}", ret, daily_pnl);
+                },
+                AccountStatus::PassedEval =>{
+                    self.bank_account.balance -= self.prop_account.get_funded_acct_cost();
+                    debug!("Passed eval");
+                    return TradingDayResult{
+                        end_of_game: None,
+                    }
                 }
             }
             //didnt blow acct if we got here. did we hit daily stop/target?
@@ -147,19 +157,18 @@ impl Trader {
             }
             num_trades_today += 1;
         }
-        //update drawdown/max loss
-        self.ftt_account.update_loss_balance();
-        // Log the bank and FTT account balances at the end of the trading day
+        // Update account at the end of the day
+        self.prop_account.update_end_of_day(daily_pnl);
+        self.prop_account.increment_simulation_day();
+
+        // Log the bank and ccount balances at the end of the trading day
         debug!(
             "End of trading day summary: daily P&L: {:.2}, trades taken: {}, bank balance: {:.2}, FTT account balance: {:.2}",
-            daily_pnl, num_trades_today, self.bank_account.balance, self.ftt_account.current_balance
+            daily_pnl, num_trades_today, self.bank_account.balance, self.prop_account.get_current_balance()
         );
-
-        //was it a real trading day?
-        self.ftt_account.try_add_trading_day(daily_pnl);
         //can we make a withdrawal?
-        if let Some(amount) = self.ftt_account.allowed_withdrawal_amount(){
-            let num_payouts = self.ftt_account.make_withdrawal(amount);
+        if let Some(amount) = self.prop_account.allowed_withdrawal_amount(){
+            let num_payouts = self.prop_account.make_withdrawal(amount);
             self.bank_account.balance += amount;
             debug!("Withdrawal made: {:.2}, bank balance after withdrawal: {:.2}", amount, self.bank_account.balance);
             if num_payouts >= self.max_payouts{
@@ -170,7 +179,7 @@ impl Trader {
             }
         }
 
-        if self.ftt_account.simulation_days >= self.max_simulation_days{
+        if self.prop_account.get_simulation_days() >= self.max_simulation_days{
             debug!("Max simulation days reached: {}", self.max_simulation_days);
             return TradingDayResult{
                 end_of_game: Some(EndOfGame::TimeOut),

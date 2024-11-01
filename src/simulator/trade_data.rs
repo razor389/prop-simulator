@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error};
+use std::{cmp::max, collections::HashMap, error::Error};
 use csv::Reader;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use rand::Rng;
@@ -18,7 +18,7 @@ pub struct TradeRecord {
 }
 
 // Function to read and parse the CSV file
-pub fn read_csv(file_path: &str, multiplier: f64) -> Result<Vec<TradeRecord>, Box<dyn Error>> {
+pub fn read_csv(file_path: &str, multiplier: f64, round_trip_cost: f64) -> Result<Vec<TradeRecord>, Box<dyn Error>> {
     let mut rdr = Reader::from_path(file_path)?;
     let mut trades = Vec::new();
 
@@ -34,8 +34,8 @@ pub fn read_csv(file_path: &str, multiplier: f64) -> Result<Vec<TradeRecord>, Bo
         trades.push(TradeRecord {
             datetime,
             trade: Trade{
-                return_value: return_value*multiplier,
-                max_opposite_excursion: max_opposite_excursion*multiplier
+                return_value: return_value*multiplier - round_trip_cost,
+                max_opposite_excursion: max_opposite_excursion*multiplier - round_trip_cost
             },
         });
     }
@@ -44,7 +44,7 @@ pub fn read_csv(file_path: &str, multiplier: f64) -> Result<Vec<TradeRecord>, Bo
 }
 
 // Function to read and parse CSV data from a string
-pub fn read_csv_from_string(data: &str, multiplier: f64) -> Result<Vec<TradeRecord>, Box<dyn Error>> {
+pub fn read_csv_from_string(data: &str, multiplier: f64, round_trip_cost: f64) -> Result<Vec<TradeRecord>, Box<dyn Error>> {
     let mut rdr = csv::Reader::from_reader(data.as_bytes());
     let mut trades = Vec::new();
 
@@ -59,8 +59,8 @@ pub fn read_csv_from_string(data: &str, multiplier: f64) -> Result<Vec<TradeReco
         trades.push(TradeRecord {
             datetime,
             trade: Trade {
-                return_value: return_value * multiplier,
-                max_opposite_excursion: max_opposite_excursion * multiplier,
+                return_value: return_value * multiplier - round_trip_cost,
+                max_opposite_excursion: max_opposite_excursion * multiplier - round_trip_cost,
             },
         });
     }
@@ -76,6 +76,7 @@ pub fn generate_simulated_trades(
     take_profit: f64,
     win_percentage: f64,
     multiplier: f64,
+    round_trip_cost: f64,
 ) -> Vec<TradeRecord> {
     let mut rng = rand::thread_rng();
     let poisson = Poisson::new(avg_trades_per_day).unwrap();
@@ -114,8 +115,8 @@ pub fn generate_simulated_trades(
             trades.push(TradeRecord {
                 datetime,
                 trade: Trade {
-                    return_value,
-                    max_opposite_excursion,
+                    return_value: return_value - round_trip_cost,
+                    max_opposite_excursion: max_opposite_excursion - round_trip_cost,
                 },
             });
         }

@@ -1,15 +1,16 @@
 // src/simulator/lib.rs
 pub mod trade_data;
-pub mod ftt_account;
+pub mod prop_account;
 pub mod trader;
 pub mod plotting;
 
 #[allow(unused_imports)]
 use plotting::plot_histogram_to_memory;
+use prop_account::AccountType;
 use serde::{Serialize, Deserialize};
 use trade_data::read_csv_from_string;
 pub use trade_data::{read_csv, calculate_trades_per_day, generate_simulated_trades, TradeRecord};
-pub use ftt_account::FttAccountType;
+pub use prop_account::ftt_account::FttAccountType;
 pub use trader::{Trader, EndOfGame};
 pub use plotting::plot_histogram;
 use rand::seq::SliceRandom;
@@ -26,13 +27,14 @@ pub struct SimulationConfig {
     pub max_trades_per_day: Option<u64>,
     pub daily_profit_target: Option<f64>,
     pub daily_stop_loss: Option<f64>,
+    pub round_trip_cost: f64,
     pub avg_trades_per_day: Option<f64>,
     pub stop_loss: Option<f64>,
     pub take_profit: Option<f64>,
     pub win_percentage: Option<f64>,
     pub max_simulation_days: u64,
     pub max_payouts: u8,
-    pub account_type: FttAccountType,
+    pub account_type: AccountType,
     pub multiplier: f64,
     pub histogram: bool,
     pub histogram_file: Option<String>,
@@ -73,9 +75,9 @@ pub fn run_simulation(config: SimulationConfig) -> Result<SimulationResult, Box<
     // Load or generate trades based on the provided configuration
     let trades = if let Some(csv_data) = &config.csv_data {
         // Read trades from CSV data
-        read_csv_from_string(csv_data, config.multiplier)?
+        read_csv_from_string(csv_data, config.multiplier, config.round_trip_cost)?
     } else if let Some(csv_file) = &config.csv_file {
-        read_csv(csv_file, config.multiplier)?
+        read_csv(csv_file, config.multiplier, config.round_trip_cost)?
     } else {
         let stop_loss = config.stop_loss.ok_or("Stop loss required")?;
         let take_profit = config.take_profit.ok_or("Take profit required")?;
@@ -88,6 +90,7 @@ pub fn run_simulation(config: SimulationConfig) -> Result<SimulationResult, Box<
             take_profit,
             win_percentage,
             config.multiplier,
+            config.round_trip_cost,
         )
     };
 
@@ -262,7 +265,7 @@ fn monte_carlo_simulation(
     trades: &Vec<TradeRecord>,
     trades_per_day: &Vec<usize>,
     iterations: usize,
-    account_type: FttAccountType,
+    account_type: AccountType,
     max_trades_per_day: Option<u64>,
     daily_profit_target: Option<f64>,
     daily_stop_loss: Option<f64>,
@@ -298,7 +301,7 @@ fn monte_carlo_simulation(
             IterationResult {
                 final_balance: trader.bank_account.balance,
                 end_state,
-                simulation_length: trader.ftt_account.simulation_days,
+                simulation_length: trader.prop_account.get_simulation_days(),
             }
     }).collect()
 }

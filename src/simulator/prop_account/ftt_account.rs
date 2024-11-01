@@ -1,5 +1,10 @@
-use super::trade_data::Trade;
+use std::str::FromStr;
+
+use super::{AccountStatus, PropAccount, TopstepAccount};
+use crate::simulator::trade_data::Trade;
 use serde::{Serialize, Deserialize};
+
+const FTT_CONSISTENCY_FRACTION: f64 = 0.2;
 
 #[derive(Debug)]
 pub struct RealTradingDay{
@@ -52,6 +57,7 @@ impl FttAccountType {
                     max_winning_day_profit: 0.0,
                     trading_days: 0,
                     simulation_days: 0,
+                    account_type: FttAccountType::Rally,
                 }
             },
             FttAccountType::Daytona => {
@@ -69,6 +75,7 @@ impl FttAccountType {
                     max_winning_day_profit: 0.0,
                     trading_days: 0,
                     simulation_days: 0,
+                    account_type: FttAccountType::Daytona,
                 }
             },
             FttAccountType::GT => {
@@ -86,6 +93,7 @@ impl FttAccountType {
                     max_winning_day_profit: 0.0,
                     trading_days: 0,
                     simulation_days: 0,
+                    account_type: FttAccountType::GT,
                 }
             },
             FttAccountType::LeMans => {
@@ -103,6 +111,7 @@ impl FttAccountType {
                     max_winning_day_profit: 0.0,
                     trading_days: 0,
                     simulation_days: 0,
+                    account_type: FttAccountType::LeMans,
                 }
             },
         }
@@ -117,12 +126,26 @@ impl FttAccountType {
             FttAccountType::LeMans => 799.0,
         }
     }
+
 }
 
+impl FromStr for FttAccountType {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "rally" => Ok(FttAccountType::Rally),
+            "daytona" => Ok(FttAccountType::Daytona),
+            "gt" => Ok(FttAccountType::GT),
+            "lemans" => Ok(FttAccountType::LeMans),
+            _ => Err("Unknown FTT account type"),
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct FttAccount {
-    pub current_balance: f64,        // current balance
+    current_balance: f64,        // current balance
     hwm_balance: f64,           //high water mark
     drawdown: f64,          //drawdown  == profit target
     loss_balance: f64,   // accounts for max loss limit / drawdown allowance (Drawdown updates EOD, stops at initial balance. max loss is intraday)
@@ -134,13 +157,8 @@ pub struct FttAccount {
     min_balance_after_withdrawal: f64,
     max_winning_day_profit: f64, //for consistency rule
     trading_days: u64, //since last withdrawal
-    pub simulation_days: u64,
-}
-
-#[derive(Debug)]
-pub enum AccountStatus{
-    Blown(f64),
-    Active(f64),
+    simulation_days: u64,
+    account_type: FttAccountType,
 }
 
 impl FttAccount {
@@ -188,7 +206,7 @@ impl FttAccount {
     }
 
     pub fn passes_consistency_rule(&self) -> bool{
-        if self.max_winning_day_profit  > 0.2 * self.current_balance {
+        if self.max_winning_day_profit  > FTT_CONSISTENCY_FRACTION * self.current_balance {
             return false;
         }
         true
@@ -223,16 +241,15 @@ impl FttAccount {
     }
 
     pub fn make_withdrawal(&mut self, amount: f64) -> u8 {
-         self.current_balance -= amount;
-         self.max_winning_day_profit = 0.0; //TODO: is this reset every withdrawal?
-         self.trading_days = 0;
-         self.payout_count += 1;
-         return self.payout_count;
+        self.current_balance -= amount;
+        self.max_winning_day_profit = 0.0; //TODO: is this reset every withdrawal?
+        self.trading_days = 0;
+        self.payout_count += 1;
+        return self.payout_count;
     }
 
     pub fn try_add_trading_day(&mut self, daily_pnl: f64){
         
-        self.simulation_days += 1;
         if self.real_trading_day.was_rtd(daily_pnl){
             self.trading_days += 1;
 
@@ -241,5 +258,44 @@ impl FttAccount {
             self.max_winning_day_profit = daily_pnl;
         }
 
+    }
+}
+
+impl PropAccount for FttAccount{
+    fn process_trade(&mut self, trade: &Trade) -> AccountStatus {
+        self.trade_on_account(trade)
+    }
+
+    fn update_end_of_day(&mut self, daily_pnl: f64) {
+        self.update_loss_balance();
+        self.try_add_trading_day(daily_pnl);
+    }
+
+    fn allowed_withdrawal_amount(&self) -> Option<f64> {
+        self.allowed_withdrawal_amount()
+    }
+
+    fn make_withdrawal(&mut self, amount: f64) -> u8 {
+        self.make_withdrawal(amount)
+    }
+
+    fn get_current_balance(&self) -> f64 {
+        self.current_balance
+    }
+
+    fn get_simulation_days(&self) -> u64 {
+        self.simulation_days
+    }
+
+    fn increment_simulation_day(&mut self) {
+        self.simulation_days += 1;
+    }
+
+    fn get_cost(&self) -> f64 {
+        self.account_type.get_cost()
+    }
+
+    fn get_funded_acct_cost(&self)-> f64 {
+        0.0
     }
 }
