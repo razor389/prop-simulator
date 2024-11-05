@@ -4,9 +4,9 @@ version = "1.0.0"
 edition = "2021"
 
 [features]
-default = ["cli"]
+default = ["web"]
 cli = []
-web = ["actix-web"]
+web = ["actix-web", "plotly"]
 
 [dependencies]
 # Rand crate for random number generation and sampling from distributions
@@ -29,3 +29,4 @@ env_logger = "0.10"
 actix-web = { version = "4", optional = true }
 actix-multipart = "0.4"
 futures-util = "0.3"
+plotly = { version = "0.7", optional = true }

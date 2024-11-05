@@ -5,7 +5,6 @@ pub mod trader;
 pub mod plotting;
 
 #[allow(unused_imports)]
-use plotting::plot_histogram_to_memory;
 use prop_account::AccountType;
 use serde::{Serialize, Deserialize};
 use trade_data::read_csv_from_string;
@@ -56,7 +55,7 @@ pub struct SimulationResult {
     pub end_state_percentages: HashMap<EndOfGame, f64>,
     pub positive_balance_percentage: f64, 
     #[cfg(feature = "web")]
-    pub histogram_image_base64: Option<String>,
+    pub histogram_plotly_json: Option<String>,
 }
 
 #[derive(Debug)]
@@ -227,14 +226,14 @@ pub fn run_simulation(config: SimulationConfig) -> Result<SimulationResult, Box<
     // Optionally generate and save a histogram
 
     #[cfg(feature = "web")]
-    let mut histogram_image_base64 = None;
+    let mut histogram_plotly_json  = None;
 
     if config.histogram {
         #[cfg(feature = "web")]
         {
-            let image_data = plot_histogram_to_memory(&filtered_balances)?;
-            histogram_image_base64 = Some(base64::encode(&image_data));
-            info!("Histogram generated");
+            let plot_json = plotting::generate_plotly_histogram_json(&filtered_balances)?;
+            histogram_plotly_json = Some(plot_json);
+            info!("Histogram generated using Plotly");
         }
         #[cfg(feature = "cli")]
         {
@@ -260,7 +259,7 @@ pub fn run_simulation(config: SimulationConfig) -> Result<SimulationResult, Box<
         end_state_percentages,
         positive_balance_percentage,
         #[cfg(feature = "web")]
-        histogram_image_base64,   // Included in JSON response
+        histogram_plotly_json,   // Included in JSON response
     })
 }
 
