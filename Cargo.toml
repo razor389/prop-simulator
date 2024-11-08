@@ -4,7 +4,7 @@ version = "1.0.0"
 edition = "2021"
 
 [features]
-default = ["cli"]
+default = ["web"]
 cli = []
 web = ["actix-web", "plotly"]
 
