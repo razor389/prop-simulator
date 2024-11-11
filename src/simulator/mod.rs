@@ -207,7 +207,7 @@ pub fn run_simulation(config: SimulationConfig) -> Result<SimulationResult, Box<
 
     let mut deviations: Vec<f64> = sorted_balances
         .iter()
-        .map(|&balance| (balance - mean_balance).abs())
+        .map(|&balance| (balance - median_balance).abs())
         .collect();
     deviations.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
